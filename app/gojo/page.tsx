@@ -2,7 +2,6 @@
 
 "use client"
 
-import {useRef} from "react"
 import CameraFeed from "@/components/CameraFeed";
 
 
