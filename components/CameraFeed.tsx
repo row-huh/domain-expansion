@@ -1,3 +1,10 @@
+// todos 
+// setup constraints such that camera feed on mobile only shows
+// up if the phone is horizontal - otherwise show a 'rotate your phone' popup
+// bcoz a very thin,slim ish domain expansion would look like ass and if we're using 1920x1080
+// vid then how do you convert it into 9:16 without creating a visual abomination
+
+
 'use client';
 
 import { useEffect, useRef } from 'react';

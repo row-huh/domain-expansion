@@ -3,10 +3,11 @@
 // a route for each like /gojo for gojo domain expansion and /sukuna for sukuna's
 
 
-export default function Sukuna() {
+
+export default function SukunaDomainExpansion() {
     return(
         <div>
-            <p> he he he he he</p>
+            <p>RYOIKI TENKAI</p>
         </div>
     )
 }

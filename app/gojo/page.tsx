@@ -17,5 +17,6 @@ export default function GojoDomainExpansion() {
 
 
 // todos
-// show webcamera
+// show webcamera - DONE
 // show mediapipe hand detection overlay
+// come up with an algorithm to detect gojo's domain expansion sign
