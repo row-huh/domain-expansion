@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.1675466862",
+    "@mediapipe/hands": "^0.4.1675469240",
+    "mediapipe": "^0.0.1-security",
     "next": "16.1.6",
-    "react": "19.2.3",
+    "react": "^19.2.3",
     "react-dom": "19.2.3"
   },
   "devDependencies": {
