@@ -6,19 +6,33 @@
 
 "use client"
 
-import HandTracker from "@/components/HandTracker"
+import { useRef, useState } from "react"
+import CameraFeed, { CameraFeedRef } from "@/components/CameraFeed"
+import HandTracker, { HandLandmarks } from "@/components/HandTracker"
+import { useSukunaGesture } from "./gestureDetect"
 
 export default function SukunaDomainExpansion() {
+  const cameraRef = useRef<CameraFeedRef>(null)
+  const [videoElement, setVideoElement] = useState<HTMLVideoElement | null>(null)
+  const detectGesture = useSukunaGesture()
+
+  const handleVideoReady = (video: HTMLVideoElement) => {
+    setVideoElement(video)
+  }
+
+  const handleHandsDetected = (hands: HandLandmarks[]) => {
+    const gestureDetected = detectGesture(hands)
+    if (gestureDetected) {
+      console.log("Sukuna Domain Expansion Activated!")
+    }
+  }
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-black text-white">
       <h1 className="text-4xl font-bold mb-6">RYOIKI TENKAI</h1>
 
-      <HandTracker
-        onGestureDetected={() => {
-          console.log("Sukuna Domain Expansion Activated!")
-          // Here later you can trigger your animation/effect
-        }}
-      />
+      <CameraFeed ref={cameraRef} onVideoReady={handleVideoReady} />
+      <HandTracker videoElement={videoElement} onHandsDetected={handleHandsDetected} />
     </div>
   )
 }
