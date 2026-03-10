@@ -1,21 +1,12 @@
-// ryoiki tenkai
+// upload an image 
 
-"use client"
+// extract landmarks using mediapipe's task vision's hand landmarker
 
-import CameraFeed from "@/components/CameraFeed";
-
-
-export default function GojoDomainExpansion() {
-    return(
-        <div>
-            <p>RYOIKI TENKAI</p>
-            <CameraFeed />
-        </div>
-    )
-}
+// check if 12 is ahead of 8. 
+// if 12 - 11 - 10 are stretched open
+// in short is the index and middle fingers are crossed and the ring and pinky finger are bent. 
+// the position of the thumb doesn't matter
+// if these requirements are even vaguely matched > immediately show a MATCHED output
+// otherwise don't do anything
 
 
-// todos
-// show webcamera - DONE
-// show mediapipe hand detection overlay
-// come up with an algorithm to detect gojo's domain expansion sign

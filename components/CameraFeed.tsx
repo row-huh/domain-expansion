@@ -1,16 +1,21 @@
-// todos 
-// setup constraints such that camera feed on mobile only shows
-// up if the phone is horizontal - otherwise show a 'rotate your phone' popup
-// bcoz a very thin,slim ish domain expansion would look like ass and if we're using 1920x1080
-// vid then how do you convert it into 9:16 without creating a visual abomination
-
-
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useImperativeHandle, forwardRef } from 'react';
 
-export default function CameraFeed() {
+export interface CameraFeedRef {
+  videoElement: HTMLVideoElement | null;
+}
+
+interface CameraFeedProps {
+  onVideoReady?: (video: HTMLVideoElement) => void;
+}
+
+const CameraFeed = forwardRef<CameraFeedRef, CameraFeedProps>(({ onVideoReady }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    videoElement: videoRef.current,
+  }));
 
   useEffect(() => {
     const startWebcam = async () => {
@@ -18,6 +23,9 @@ export default function CameraFeed() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
+          if (onVideoReady) {
+            onVideoReady(videoRef.current);
+          }
         }
       } catch (err) {
         console.error('Error accessing webcam:', err);
@@ -32,7 +40,7 @@ export default function CameraFeed() {
         tracks.forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [onVideoReady]);
 
   return (
     <video
@@ -43,4 +51,8 @@ export default function CameraFeed() {
       className="fixed inset-0 w-full h-full object-cover"
     />
   );
-}
+});
+
+CameraFeed.displayName = 'CameraFeed';
+
+export default CameraFeed;
