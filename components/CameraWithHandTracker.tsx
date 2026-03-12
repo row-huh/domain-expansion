@@ -6,6 +6,16 @@ import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision"
 export type Landmark = { x: number; y: number; z?: number }
 export type HandLandmarks = Landmark[]
 
+// HAND_CONNECTIONS — same as mp.tasks.vision.HandLandmarksConnections.HAND_CONNECTIONS
+const HAND_CONNECTIONS = [
+  [0,1],[1,2],[2,3],[3,4],       // thumb
+  [0,5],[5,6],[6,7],[7,8],       // index
+  [0,9],[9,10],[10,11],[11,12],  // middle
+  [0,13],[13,14],[14,15],[15,16],// ring
+  [0,17],[17,18],[18,19],[19,20],// pinky
+  [5,9],[9,13],[13,17],          // palm
+]
+
 export interface CameraFeedRef {
   videoElement: HTMLVideoElement | null
 }
@@ -94,15 +104,28 @@ const CameraWithHandTracker = forwardRef<CameraFeedRef, Props>(
           ctx.clearRect(0, 0, canvas.width, canvas.height)
 
           if (!result.landmarks?.length) return
-
           result.landmarks.forEach((hand) => {
+            // Draw connections first (so dots render on top)
+            ctx.strokeStyle = "white"
+            ctx.lineWidth = 2
+            HAND_CONNECTIONS.forEach(([start, end]) => {
+              const a = hand[start]
+              const b = hand[end]
+              ctx.beginPath()
+              ctx.moveTo(a.x * canvas.width, a.y * canvas.height)
+              ctx.lineTo(b.x * canvas.width, b.y * canvas.height)
+              ctx.stroke()
+            })
+
+            // Draw landmark dots
             hand.forEach((lm) => {
               ctx.beginPath()
-              ctx.arc(lm.x * canvas.width, lm.y * canvas.height, 5, 0, 2 * Math.PI)
-              ctx.fillStyle = "red"
+              ctx.arc(lm.x * canvas.width, lm.y * canvas.height, 4, 0, 2 * Math.PI)
+              ctx.fillStyle = "lime"
               ctx.fill()
             })
           })
+          
 
           onHandsDetected?.(
             result.landmarks.map((hand) =>
