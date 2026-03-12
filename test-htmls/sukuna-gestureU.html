@@ -66,7 +66,7 @@ function checkGesture(landmarks) {
   // Rule 5: Pinky fingers bent — tip(20).y > pip(18).y
   if (L[20].y > L[18].y && R[20].y > R[18].y) passed++;
 
-  return passed >= 3;
+  return passed >= 2;
 }
 
 async function init() {
@@ -77,7 +77,7 @@ async function init() {
   const handLandmarker = await HandLandmarker.createFromOptions(vision, {
     baseOptions: {
       modelAssetPath: "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
-      delegate: "GPU"
+      delegate: "CPU"
     },
     numHands: 2,
     runningMode: "IMAGE"
@@ -109,7 +109,7 @@ async function init() {
       }
 
       if (landmarks.length >= 2 && checkGesture(landmarks)) {
-        resultEl.textContent = "⛩️ MATCHED — Malevolent Shrine";
+        resultEl.textContent = "⛩️ MATCHED — Malevolent Shrine summoned by Sukuna & his Unpaid Intern USANNE";
         resultEl.className = "matched";
       } else {
         resultEl.textContent = "";

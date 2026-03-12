@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-
     "@mediapipe/tasks-vision": "^0.10.32",
     "mediapipe": "^0.0.1-security",
     "next": "16.1.6",
