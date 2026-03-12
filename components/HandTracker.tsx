@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision"
 
 export type Landmark = { x: number; y: number; z?: number }
 export type HandLandmarks = Landmark[]
@@ -12,93 +13,102 @@ type HandTrackerProps = {
   height?: number
 }
 
-export default function HandTracker({ videoElement, onHandsDetected, width = 1280, height = 720 }: HandTrackerProps) {
+export default function HandTracker({
+  videoElement,
+  onHandsDetected,
+  width = 1280,
+  height = 720,
+}: HandTrackerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const videoRef = useRef<HTMLVideoElement | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
+  const landmarkerRef = useRef<HandLandmarker | null>(null)
+  const animFrameRef = useRef<number | null>(null)
+  const [ready, setReady] = useState(false)
 
+  // Initialize HandLandmarker once on mount
   useEffect(() => {
-    if (!videoElement || !canvasRef.current || isProcessing) return
+    let cancelled = false
 
-    videoRef.current = videoElement
-    setIsProcessing(true)
+    const init = async () => {
+      // Points to the WASM bundle hosted on jsDelivr
+      const vision = await FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+      )
 
-    let hands: any = null
-    let camera: any = null
-
-    const initMediaPipe = async () => {
-      const handsModuleImport = await import("@mediapipe/hands")
-      const HandsClass = handsModuleImport.Hands || (handsModuleImport as any).default
-
-      hands = new HandsClass({
-        locateFile: (file: string) =>
-          `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
-      })
-
-      hands.setOptions({
-        maxNumHands: 2,
-        modelComplexity: 1,
-        minDetectionConfidence: 0.8,
+      const landmarker = await HandLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task",
+          delegate: "GPU", // falls back to CPU automatically
+        },
+        runningMode: "VIDEO",   // ← needed for per-frame detection
+        numHands: 2,
+        minHandDetectionConfidence: 0.8,
+        minHandPresenceConfidence: 0.8,
         minTrackingConfidence: 0.8,
       })
 
-      hands.onResults(onResults)
-      const cameraUtils = await import("@mediapipe/camera_utils")
-      const CameraClass = cameraUtils.Camera
-
-      camera = new CameraClass(videoRef.current!, {
-        onFrame: async () => {
-          if (hands && videoRef.current) {
-            await hands.send({ image: videoRef.current })
-          }
-        },
-        width,
-        height,
-      })
-
-      camera.start()
+      if (!cancelled) {
+        landmarkerRef.current = landmarker
+        setReady(true)
+      }
     }
 
-    const onResults = (results: any) => {
-      if (!canvasRef.current || !results.multiHandLandmarks) return
+    init()
+    return () => {
+      cancelled = true
+      landmarkerRef.current?.close()
+    }
+  }, [])
 
-      const ctx = canvasRef.current.getContext("2d")
-      if (!ctx) return
+  //  Start the render loop once both the landmarker and video are ready
+  useEffect(() => {
+    if (!ready || !videoElement || !canvasRef.current) return
 
-      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height)
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext("2d")!
+    let lastTimestamp = -1
 
-      results.multiHandLandmarks.forEach((landmarks: any) => {
-        landmarks.forEach((lm: any) => {
+    const tick = () => {
+      animFrameRef.current = requestAnimationFrame(tick)
+
+      // Only process a new frame when the video timestamp has advanced
+      const ts = videoElement.currentTime * 1000  // ms
+      if (ts === lastTimestamp || videoElement.paused || videoElement.ended) return
+      lastTimestamp = ts
+
+      // Detect — pass the timestamp so the tracker can interpolate
+      const result = landmarkerRef.current!.detectForVideo(videoElement, performance.now())
+
+      // Clear previous overlay
+      ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+      if (!result.landmarks?.length) return
+
+      //  Draw landmarks
+      result.landmarks.forEach((hand) => {
+        hand.forEach((lm) => {
           ctx.beginPath()
-          ctx.arc(
-            lm.x * canvasRef.current!.width,
-            lm.y * canvasRef.current!.height,
-            5,
-            0,
-            2 * Math.PI
-          )
+          ctx.arc(lm.x * canvas.width, lm.y * canvas.height, 5, 0, 2 * Math.PI)
           ctx.fillStyle = "red"
           ctx.fill()
         })
       })
 
-      const hands: HandLandmarks[] = results.multiHandLandmarks.map((landmarks: any) =>
-        landmarks.map((lm: any) => ({ x: lm.x, y: lm.y, z: lm.z }))
-      )
-
+      // Forward normalised landmarks to parent
       if (onHandsDetected) {
-        onHandsDetected(hands)
+        const mapped: HandLandmarks[] = result.landmarks.map((hand) =>
+          hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
+        )
+        onHandsDetected(mapped)
       }
     }
 
-    initMediaPipe()
+    animFrameRef.current = requestAnimationFrame(tick)
 
     return () => {
-      if (hands) hands.close()
-      if (camera) camera.stop()
-      setIsProcessing(false)
+      if (animFrameRef.current !== null) cancelAnimationFrame(animFrameRef.current)
     }
-  }, [videoElement, onHandsDetected, width, height])
+  }, [ready, videoElement, onHandsDetected, width, height])
 
   return (
     <canvas
