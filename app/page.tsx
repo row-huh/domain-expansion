@@ -14,11 +14,11 @@ type GestureResult =
 
 const SUBTITLES = [
   { text: "Give me your hand", start: 0.3, end: 2.1 },
-  { text: "Come! Come!", start: 3.5, end: 5.0 },
-  { text: "Come! Come! Come on!", start: 6.6, end: 8.9 },
+  { text: "Come on.", start: 3.5, end: 5.0 },
+  { text: "Come now. Come on.", start: 6.6, end: 8.9 },
 ];
 
-const IDLE_TRIGGER_MS = 5000;
+const IDLE_TRIGGER_MS = 1000;
 
 function dist(a: Landmark, b: Landmark) {
   return Math.sqrt(
@@ -242,7 +242,7 @@ export default function LiveGestureDetectorPage() {
         <>
           <video
             ref={videoRef}
-            src="/idle/gojo-gimmeyourhand.webm"
+            src="/idle/gojo-gimmeyourhand2.webm"
             muted
             playsInline
             onEnded={handleIdleEnded}
@@ -267,7 +267,7 @@ export default function LiveGestureDetectorPage() {
       {/* Audio always in DOM */}
       <audio
         ref={audioRef}
-        src="/idle/gojo-gimmeyourhand.webm"
+        src="/idle/gojo-gimmeyourhand2.webm"
         preload="auto"
         className="hidden"
       />
