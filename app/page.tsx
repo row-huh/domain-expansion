@@ -14,8 +14,8 @@ type GestureResult =
 
 const SUBTITLES = [
   { text: "Give me your hand", start: 0.3, end: 2.1 },
-  { text: "Come! Come!", start: 3.5, end: 5.0 },
-  { text: "Come! Come! Come on!", start: 6.6, end: 8.9 },
+  { text: "Come on.", start: 3.5, end: 5.0 },
+  { text: "Come now. Come on.", start: 6.6, end: 8.9 },
 ];
 
 const IDLE_TRIGGER_MS = 5000;
