@@ -1,4 +1,4 @@
-// camerawithhandtracker.tsx
+// components/CameraWithHandTracker.tsx
 
 "use client"
 
@@ -8,14 +8,13 @@ import { HandLandmarker, FilesetResolver } from "@mediapipe/tasks-vision"
 export type Landmark = { x: number; y: number; z?: number }
 export type HandLandmarks = Landmark[]
 
-// HAND_CONNECTIONS — same as mp.tasks.vision.HandLandmarksConnections.HAND_CONNECTIONS
 const HAND_CONNECTIONS = [
-  [0,1],[1,2],[2,3],[3,4],       // thumb
-  [0,5],[5,6],[6,7],[7,8],       // index
-  [0,9],[9,10],[10,11],[11,12],  // middle
-  [0,13],[13,14],[14,15],[15,16],// ring
-  [0,17],[17,18],[18,19],[19,20],// pinky
-  [5,9],[9,13],[13,17],          // palm
+  [0,1],[1,2],[2,3],[3,4],
+  [0,5],[5,6],[6,7],[7,8],
+  [0,9],[9,10],[10,11],[11,12],
+  [0,13],[13,14],[14,15],[15,16],
+  [0,17],[17,18],[18,19],[19,20],
+  [5,9],[9,13],[13,17],
 ]
 
 export interface CameraFeedRef {
@@ -34,8 +33,15 @@ const CameraWithHandTracker = forwardRef<CameraFeedRef, Props>(
     const canvasRef = useRef<HTMLCanvasElement>(null)
     const landmarkerRef = useRef<HandLandmarker | null>(null)
     const animFrameRef = useRef<number | null>(null)
+    // Keep a ref to the latest callback so the tick loop never goes stale
+    const onHandsDetectedRef = useRef(onHandsDetected)
 
     useImperativeHandle(ref, () => ({ videoElement: videoRef.current }))
+
+    // Keep ref in sync whenever prop changes — no need to restart the loop
+    useEffect(() => {
+      onHandsDetectedRef.current = onHandsDetected
+    }, [onHandsDetected])
 
     // Start webcam
     useEffect(() => {
@@ -83,31 +89,28 @@ const CameraWithHandTracker = forwardRef<CameraFeedRef, Props>(
       }
     }, [])
 
-    // Render loop — starts once video is playing
+    // Render loop — starts once video is playing, handles already-playing case
     useEffect(() => {
       const video = videoRef.current
       const canvas = canvasRef.current
       if (!video || !canvas) return
 
       const ctx = canvas.getContext("2d")!
+      let lastTimestamp = -1
 
-      const onPlaying = () => {
-        let lastTimestamp = -1
+      const tick = () => {
+        animFrameRef.current = requestAnimationFrame(tick)
+        if (!landmarkerRef.current || video.paused || video.ended) return
 
-        const tick = () => {
-          animFrameRef.current = requestAnimationFrame(tick)
-          if (!landmarkerRef.current || video.paused || video.ended) return
+        const ts = video.currentTime * 1000
+        if (ts === lastTimestamp) return
+        lastTimestamp = ts
 
-          const ts = video.currentTime * 1000
-          if (ts === lastTimestamp) return
-          lastTimestamp = ts
+        const result = landmarkerRef.current.detectForVideo(video, performance.now())
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
 
-          const result = landmarkerRef.current.detectForVideo(video, performance.now())
-          ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-          if (!result.landmarks?.length) return
+        if (result.landmarks?.length) {
           result.landmarks.forEach((hand) => {
-            // Draw connections first (so dots render on top)
             ctx.strokeStyle = "white"
             ctx.lineWidth = 2
             HAND_CONNECTIONS.forEach(([start, end]) => {
@@ -118,8 +121,6 @@ const CameraWithHandTracker = forwardRef<CameraFeedRef, Props>(
               ctx.lineTo(b.x * canvas.width, b.y * canvas.height)
               ctx.stroke()
             })
-
-            // Draw landmark dots
             hand.forEach((lm) => {
               ctx.beginPath()
               ctx.arc(lm.x * canvas.width, lm.y * canvas.height, 4, 0, 2 * Math.PI)
@@ -127,24 +128,36 @@ const CameraWithHandTracker = forwardRef<CameraFeedRef, Props>(
               ctx.fill()
             })
           })
-          
-
-          onHandsDetected?.(
-            result.landmarks.map((hand) =>
-              hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
-            )
-          )
         }
 
+        // Always fire the callback (even with 0 hands) using the latest ref
+        onHandsDetectedRef.current?.(
+          (result.landmarks ?? []).map((hand) =>
+            hand.map((lm) => ({ x: lm.x, y: lm.y, z: lm.z }))
+          )
+        )
+      }
+
+      const startLoop = () => {
+        if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
+        lastTimestamp = -1
         animFrameRef.current = requestAnimationFrame(tick)
       }
 
-      video.addEventListener("playing", onPlaying)
+      // If video is already playing (effect ran late), start immediately
+      if (!video.paused && !video.ended && video.readyState >= 3) {
+        console.log("[camera] video already playing, starting loop immediately")
+        startLoop()
+      }
+
+      // Also listen for future play events (initial load, or resume)
+      video.addEventListener("playing", startLoop)
+
       return () => {
-        video.removeEventListener("playing", onPlaying)
+        video.removeEventListener("playing", startLoop)
         if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current)
       }
-    }, [onHandsDetected])
+    }, []) // empty deps — loop is stable, callback is read via ref
 
     return (
       <div className="fixed inset-0 w-full h-full">
