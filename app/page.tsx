@@ -18,7 +18,7 @@ const SUBTITLES = [
   { text: "Come now. Come on.", start: 6.6, end: 8.9 },
 ];
 
-const IDLE_TRIGGER_MS = 1000;
+const IDLE_TRIGGER_MS = 5000;
 
 function dist(a: Landmark, b: Landmark) {
   return Math.sqrt(
@@ -242,7 +242,7 @@ export default function LiveGestureDetectorPage() {
         <>
           <video
             ref={videoRef}
-            src="/idle/gojo-gimmeyourhand2.webm"
+            src="/idle/gojo-gimmeyourhand.webm"
             muted
             playsInline
             onEnded={handleIdleEnded}
@@ -267,7 +267,7 @@ export default function LiveGestureDetectorPage() {
       {/* Audio always in DOM */}
       <audio
         ref={audioRef}
-        src="/idle/gojo-gimmeyourhand2.webm"
+        src="/idle/gojo-gimmeyourhand.webm"
         preload="auto"
         className="hidden"
       />
