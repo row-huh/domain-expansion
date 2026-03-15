@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Unlimited Void</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; width: 100vw; height: 100vh; overflow: hidden; font-family: sans-serif; }
+
+  #stage { position: relative; width: 100vw; height: 100vh; }
+
+  /* Layer order (bottom → top):
+     0. #bg-raw-canvas   — mirrored webcam feed (the "original" background)
+     1. #bg-video        — unlimited void webm
+     2. #circle-canvas   — growing white circle
+     3. #output-canvas   — person cutout
+  */
+
+  #bg-raw-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+
+  #bg-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+
+  /* SVG circle that expands to cover screen */
+  #circle-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  #output-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    z-index: 10;
+  }
+
+  #webcam { display: none; }
+
+  /* Shake animation on the whole stage */
+  @keyframes shake {
+    0%   { transform: translate(0,0) rotate(0deg); }
+    10%  { transform: translate(-4px, -3px) rotate(-0.4deg); }
+    20%  { transform: translate(5px, 2px) rotate(0.3deg); }
+    30%  { transform: translate(-5px, 3px) rotate(0.5deg); }
+    40%  { transform: translate(4px, -4px) rotate(-0.3deg); }
+    50%  { transform: translate(-3px, 5px) rotate(0.4deg); }
+    60%  { transform: translate(5px, -2px) rotate(-0.5deg); }
+    70%  { transform: translate(-4px, 4px) rotate(0.2deg); }
+    80%  { transform: translate(3px, -3px) rotate(-0.3deg); }
+    90%  { transform: translate(-3px, 2px) rotate(0.3deg); }
+    100% { transform: translate(0,0) rotate(0deg); }
+  }
+
+  #stage.shaking {
+    animation: shake 0.12s linear infinite;
+  }
+
+  #loading {
+    position: absolute; inset: 0;
+    z-index: 100;
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    gap: 16px;
+    transition: opacity 0.5s ease;
+  }
+  #loading.hidden { opacity: 0; pointer-events: none; }
+
+  #loading-text {
+    font-size: 1rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.65;
+  }
+
+  .spinner {
+    width: 36px; height: 36px;
+    border: 2.5px solid rgba(255,255,255,0.12);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.85s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <canvas id="bg-raw-canvas"></canvas>
+  <video id="bg-video" src="../public/gojo/unlimited-void.webm" loop muted playsinline preload="auto"></video>
+  <canvas id="circle-canvas"></canvas>
+  <canvas id="output-canvas"></canvas>
+  <video id="webcam" autoplay playsinline muted></video>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div id="loading-text">Initializing…</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/selfie_segmentation.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+<script>
+(async () => {
+
+  const webcamEl     = document.getElementById('webcam');
+  const canvas       = document.getElementById('output-canvas');
+  const ctx          = canvas.getContext('2d');
+  const bgRawCanvas  = document.getElementById('bg-raw-canvas');
+  const bgRawCtx     = bgRawCanvas.getContext('2d');
+  const circleCanvas = document.getElementById('circle-canvas');
+  const circleCtx    = circleCanvas.getContext('2d');
+  const bgVideo      = document.getElementById('bg-video');
+  const stageEl      = document.getElementById('stage');
+  const loadingEl    = document.getElementById('loading');
+  const loadingTxt   = document.getElementById('loading-text');
+
+  const W = 640, H = 480;
+
+  // Size all canvases
+  [canvas, bgRawCanvas, circleCanvas].forEach(c => {
+    c.width = W; c.height = H;
+  });
+
+  // ── Audio via Web Audio API (fetched in parallel) ─────────────────────
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  let audioBuffer    = null;
+  let audioSource    = null;
+  let audioStartTime = null;
+
+  const audioFetchPromise = fetch('../public/gojo/unlimited-void.mp3')
+    .then(r => r.arrayBuffer())
+    .then(buf => audioCtx.decodeAudioData(buf))
+    .then(decoded => { audioBuffer = decoded; })
+    .catch(e => console.warn('Audio load error:', e));
+
+  function getAudioTime() {
+    if (!audioSource || audioStartTime === null) return 0;
+    return audioCtx.currentTime - audioStartTime;
+  }
+
+  function startAudio() {
+    if (!audioBuffer || audioSource) return;
+    audioCtx.resume().then(() => {
+      audioSource = audioCtx.createBufferSource();
+      audioSource.buffer = audioBuffer;
+      audioSource.connect(audioCtx.destination);
+      audioSource.start(0);
+      audioStartTime = audioCtx.currentTime;
+    });
+  }
+
+  // ── White circle expansion ─────────────────────────────────────────────
+  // Circle grows from center until it covers the full canvas diagonal
+  const MAX_RADIUS = Math.sqrt(W * W + H * H) / 2 + 10; // full diagonal coverage
+  const CX = W / 2, CY = H / 2;
+  const CIRCLE_DURATION = 600; // ms to go from 0 to full coverage
+
+  let circleAnimStart = null;
+  let circleRadius    = 0;
+  let circleComplete  = false;
+
+  function animateCircle(ts) {
+    if (!circleAnimStart) circleAnimStart = ts;
+    const elapsed = ts - circleAnimStart;
+    const progress = Math.min(elapsed / CIRCLE_DURATION, 1);
+    // ease-in-out cubic
+    const eased = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+
+    circleRadius = eased * MAX_RADIUS;
+
+    circleCtx.clearRect(0, 0, W, H);
+    circleCtx.beginPath();
+    circleCtx.arc(CX, CY, circleRadius, 0, Math.PI * 2);
+    circleCtx.fillStyle = '#ffffff';
+    circleCtx.fill();
+
+    if (progress < 1) {
+      requestAnimationFrame(animateCircle);
+    } else {
+      circleComplete = true;
+      // Circle fully covers screen — stay white, wait for phase 2 at 6.9s
+    }
+  }
+
+  function revealVoid() {
+    // Triggered at 6.9s: shake + webm, then fade out white circle
+    bgVideo.play().catch(() => {});
+    bgVideo.style.opacity = '1';
+    stageEl.classList.add('shaking');
+
+    let fadeStart = null;
+    const FADE_DURATION = 350;
+    function fadeCircle(ts2) {
+      if (!fadeStart) fadeStart = ts2;
+      const fp = Math.min((ts2 - fadeStart) / FADE_DURATION, 1);
+      circleCanvas.style.opacity = (1 - fp).toString();
+      if (fp < 1) {
+        requestAnimationFrame(fadeCircle);
+      } else {
+        circleCanvas.style.opacity = '0';
+        setTimeout(() => stageEl.classList.remove('shaking'), 800);
+      }
+    }
+    requestAnimationFrame(fadeCircle);
+  }
+
+  // ── Phase tracking ─────────────────────────────────────────────────────
+  // phase 0: original bg (webcam passthrough)
+  // phase 1: white circle expanding (t >= 1.8s), stays white
+  // phase 2: webm + shake revealed (t >= 6.9s)
+  let phase = 0;
+
+  function checkPhase() {
+    const t = getAudioTime();
+
+    if (phase === 0 && t >= 1.8) {
+      phase = 1;
+      requestAnimationFrame(animateCircle);
+    }
+
+    if (phase === 1 && circleComplete && t >= 6.9) {
+      phase = 2;
+      revealVoid();
+    }
+  }
+
+  // ── MediaPipe segmentation ────────────────────────────────────────────
+  const selfieSegmentation = new SelfieSegmentation({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/${f}`
+  });
+
+  selfieSegmentation.setOptions({ modelSelection: 0, selfieMode: true });
+
+  let firstFrame = false;
+
+  selfieSegmentation.onResults(results => {
+    const iw = results.image.width  || W;
+    const ih = results.image.height || H;
+
+    if (canvas.width !== iw || canvas.height !== ih) {
+      canvas.width = iw; canvas.height = ih;
+      bgRawCanvas.width = iw; bgRawCanvas.height = ih;
+      circleCanvas.width = iw; circleCanvas.height = ih;
+    }
+
+    // Draw raw webcam to background canvas (same orientation as segmentation mask)
+    bgRawCtx.drawImage(results.image, 0, 0, iw, ih);
+
+    // Draw person cutout on output canvas
+    ctx.clearRect(0, 0, iw, ih);
+    ctx.drawImage(results.image, 0, 0, iw, ih);
+    ctx.globalCompositeOperation = 'destination-in';
+    ctx.drawImage(results.segmentationMask, 0, 0, iw, ih);
+    ctx.globalCompositeOperation = 'source-over';
+
+    if (audioSource) checkPhase();
+
+    if (!firstFrame) {
+      firstFrame = true;
+      loadingEl.classList.add('hidden');
+      startAudio();
+    }
+  });
+
+  // ── Camera ────────────────────────────────────────────────────────────
+  loadingTxt.textContent = 'Requesting camera…';
+
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: { ideal: W }, height: { ideal: H }, frameRate: { ideal: 30 }, facingMode: 'user' },
+      audio: false
+    });
+  } catch (e) {
+    loadingTxt.textContent = 'Camera access denied.';
+    return;
+  }
+
+  webcamEl.srcObject = stream;
+  await new Promise(r => { webcamEl.onloadedmetadata = r; });
+  webcamEl.play();
+
+  loadingTxt.textContent = 'Loading model…';
+
+  await audioFetchPromise;
+
+  const camera = new Camera(webcamEl, {
+    onFrame: async () => {
+      await selfieSegmentation.send({ image: webcamEl });
+    },
+    width: W, height: H
+  });
+
+  camera.start();
+
+})();
+</script>
+</body>
+</html>

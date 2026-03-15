@@ -1,4 +1,3 @@
-// app/page.tsx
 
 "use client";
 
@@ -199,6 +198,9 @@ export default function LiveGestureDetectorPage() {
       };
     }
     if (result.type === "unlimited_void") {
+      // trigger some audio
+      // some overlays
+      // something
       return {
         emoji: "🌌",
         label: "UNLIMITED VOID",
