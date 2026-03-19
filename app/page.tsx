@@ -1,8 +1,8 @@
-
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraWithHandTracker, { CameraFeedRef, HandLandmarks } from "@/components/CameraWithHandTracker";
+import GojoEffects from "@/app/gojo-effects";
 
 type Landmark = { x: number; y: number; z?: number };
 
@@ -13,8 +13,8 @@ type GestureResult =
 
 const SUBTITLES = [
   { text: "Give me your hand", start: 0.3, end: 2.1 },
-  { text: "Come on.", start: 3.5, end: 5.0 },
-  { text: "Come now. Come on.", start: 6.6, end: 8.9 },
+  { text: "Come.", start: 3.5, end: 5.0 },
+  { text: "Come now. Come.", start: 6.6, end: 8.9 },
 ];
 
 const IDLE_TRIGGER_MS = 5000;
@@ -198,17 +198,7 @@ export default function LiveGestureDetectorPage() {
       };
     }
     if (result.type === "unlimited_void") {
-      // trigger some audio
-      // some overlays
-      // something
-      return {
-        emoji: "🌌",
-        label: "UNLIMITED VOID",
-        sub: "Domain Expansion: Engaged",
-        color: "from-blue-900/80 to-indigo-600/60",
-        border: "border-blue-400/60",
-        text: "text-blue-100",
-      };
+      return null;
     }
     return null;
   })();
@@ -216,6 +206,10 @@ export default function LiveGestureDetectorPage() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       <CameraWithHandTracker ref={cameraRef} onHandsDetected={handleHands} />
+
+      {result.type === "unlimited_void" && (
+        <GojoEffects videoElement={cameraRef.current?.videoElement ?? null} />
+      )}
 
       {overlayContent && (
         <div className="absolute inset-0 pointer-events-none flex items-end justify-center pb-16 px-6">
@@ -244,7 +238,7 @@ export default function LiveGestureDetectorPage() {
         <>
           <video
             ref={videoRef}
-            src="/idle/gojo-gimmeyourhand.webm"
+            src="/idle/gojo-gimmeyourhand2.webm"
             muted
             playsInline
             onEnded={handleIdleEnded}
@@ -263,13 +257,14 @@ export default function LiveGestureDetectorPage() {
               </p>
             </div>
           )}
+
         </>
       )}
 
       {/* Audio always in DOM */}
       <audio
         ref={audioRef}
-        src="/idle/gojo-gimmeyourhand.webm"
+        src="/idle/gojo-gimmeyourhand2.webm"
         preload="auto"
         className="hidden"
       />
