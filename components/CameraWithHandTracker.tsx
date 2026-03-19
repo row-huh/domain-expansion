@@ -65,7 +65,7 @@ const CameraWithHandTracker = forwardRef<CameraFeedRef, Props>(
       let cancelled = false
       const init = async () => {
         const vision = await FilesetResolver.forVisionTasks(
-          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+          "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm"
         )
         const landmarker = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {

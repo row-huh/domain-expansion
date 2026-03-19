@@ -106,7 +106,7 @@ export default function GojoEffects({ videoElement }: Props) {
 
     async function initSegmenter() {
       const vision = await FilesetResolver.forVisionTasks(
-        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision/wasm"
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.32/wasm"
       );
       segmenter = await ImageSegmenter.createFromOptions(vision, {
         baseOptions: {
