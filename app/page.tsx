@@ -8,7 +8,6 @@ type Landmark = { x: number; y: number; z?: number };
 
 type GestureResult =
   | { type: "sukuna" }
-  | { type: "unlimited_void" }
   | { type: "none"; handsDetected: number };
 
 const SUBTITLES = [
@@ -60,18 +59,27 @@ function checkSukuna(landmarks: Landmark[][]): boolean {
 }
 
 function checkCrossed(lm: Landmark[]): boolean {
+  // Index (5-8) and middle (9-12) must be extended: tip clearly above MCP
+  const indexExtended = lm[8].y < lm[5].y - 0.04;
+  const middleExtended = lm[12].y < lm[9].y - 0.04;
+
+  // Crossing: tips have inverted X relationship vs their MCPs
   const naturalDir = lm[5].x - lm[9].x;
-  const tipDir = lm[8].x - lm[12].x;
-  const crossed = naturalDir * tipDir < 0 || Math.abs(tipDir) < 0.05;
-  const middleStretched =
-    angle(lm[12], lm[11], lm[10]) > 140 &&
-    angle(lm[11], lm[10], lm[9]) > 140;
-  return crossed && middleStretched;
+  const tipDir     = lm[8].x - lm[12].x;
+  const crossed = naturalDir * tipDir < 0;
+
+  // Ring (13-16) and pinky (17-20) must be bent: tip at or below PIP
+  const ringBent  = lm[16].y > lm[14].y - 0.02;
+  const pinkyBent = lm[20].y > lm[18].y - 0.02;
+
+  return indexExtended && middleExtended && crossed && ringBent && pinkyBent;
 }
 
 export default function LiveGestureDetectorPage() {
   const cameraRef = useRef<CameraFeedRef>(null);
   const [result, setResult] = useState<GestureResult>({ type: "none", handsDetected: 0 });
+  const [unlimitedVoidActive, setUnlimitedVoidActive] = useState(false);
+  const unlimitedVoidActiveRef = useRef(false);
 
   const [idleActive, setIdleActive] = useState(false);
   const [currentSubtitle, setCurrentSubtitle] = useState<string | null>(null);
@@ -140,6 +148,11 @@ export default function LiveGestureDetectorPage() {
     }
   }, []);
 
+  const handleVoidComplete = useCallback(() => {
+    unlimitedVoidActiveRef.current = false;
+    setUnlimitedVoidActive(false);
+  }, []);
+
   // Stable — deps are startIdle/stopIdle which are also stable
   const handleHands = useCallback((hands: HandLandmarks[]) => {
     if (!cameraReadyRef.current) {
@@ -154,10 +167,13 @@ export default function LiveGestureDetectorPage() {
 
     if (hands.length >= 2 && checkSukuna(hands)) {
       setResult({ type: "sukuna" });
-    } else if (hands.length === 1 && checkCrossed(hands[0])) {
-      setResult({ type: "unlimited_void" });
     } else {
       setResult({ type: "none", handsDetected: hands.length });
+    }
+
+    if (hands.length === 1 && checkCrossed(hands[0]) && !unlimitedVoidActiveRef.current) {
+      unlimitedVoidActiveRef.current = true;
+      setUnlimitedVoidActive(true);
     }
 
     if (hands.length > 0) {
@@ -197,9 +213,6 @@ export default function LiveGestureDetectorPage() {
         text: "text-red-100",
       };
     }
-    if (result.type === "unlimited_void") {
-      return null;
-    }
     return null;
   })();
 
@@ -207,8 +220,11 @@ export default function LiveGestureDetectorPage() {
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       <CameraWithHandTracker ref={cameraRef} onHandsDetected={handleHands} />
 
-      {result.type === "unlimited_void" && (
-        <GojoEffects videoElement={cameraRef.current?.videoElement ?? null} />
+      {unlimitedVoidActive && (
+        <GojoEffects
+          videoElement={cameraRef.current?.videoElement ?? null}
+          onComplete={handleVoidComplete}
+        />
       )}
 
       {overlayContent && (

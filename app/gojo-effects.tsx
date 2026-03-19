@@ -5,9 +5,13 @@ import { ImageSegmenter, FilesetResolver } from "@mediapipe/tasks-vision";
 
 interface Props {
   videoElement: HTMLVideoElement | null;
+  onComplete?: () => void;
 }
 
-export default function GojoEffects({ videoElement }: Props) {
+export default function GojoEffects({ videoElement, onComplete }: Props) {
+  const onCompleteRef  = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
   const containerRef   = useRef<HTMLDivElement>(null);
   const bgVideoRef     = useRef<HTMLVideoElement>(null);
   const circleCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -96,6 +100,7 @@ export default function GojoEffects({ videoElement }: Props) {
     }
 
     audio.currentTime = 0;
+    audio.addEventListener("ended", () => onCompleteRef.current?.());
     audio.play().then(() => {
       phaseRafRef.current = requestAnimationFrame(phaseTick);
     }).catch(() => {});
