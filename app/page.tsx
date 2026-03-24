@@ -258,7 +258,7 @@ export default function LiveGestureDetectorPage() {
             muted
             playsInline
             onEnded={handleIdleEnded}
-            className="absolute bottom-0 left-0 w-[40vw] h-auto pointer-events-none"
+            className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[40vw] h-auto pointer-events-none"
           />
           {currentSubtitle && (
             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none px-4">
@@ -287,20 +287,24 @@ export default function LiveGestureDetectorPage() {
 
       {/* Pixel chibi overlays — hidden once unlimited void triggers */}
       {!unlimitedVoidActive && (
-        <div className="absolute bottom-0 right-0 flex items-end pointer-events-none">
-          <img
-            src="/pixel-chibis/gojo.png"
-            alt=""
-            className="h-64"
-            style={{ imageRendering: "pixelated" }}
-          />
-          <img
-            src="/pixel-chibis/sukuna.png"
-            alt=""
-            className="h-64"
-            style={{ imageRendering: "pixelated" }}
-          />
-        </div>
+        <>
+          <div className="absolute bottom-6 left-0 pointer-events-none">
+            <img
+              src="/pixel-chibis/gojo.png"
+              alt=""
+              className="h-64"
+              style={{ imageRendering: "pixelated" }}
+            />
+          </div>
+          <div className="absolute bottom-6 right-0 pointer-events-none">
+            <img
+              src="/pixel-chibis/sukuna.png"
+              alt=""
+              className="h-64"
+              style={{ imageRendering: "pixelated", transform: "scaleX(-1)" }}
+             />
+           </div>
+        </>
       )}
 
       {/* Debug bar */}
