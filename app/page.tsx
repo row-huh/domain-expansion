@@ -285,6 +285,24 @@ export default function LiveGestureDetectorPage() {
         className="hidden"
       />
 
+      {/* Pixel chibi overlays — hidden once unlimited void triggers */}
+      {!unlimitedVoidActive && (
+        <div className="absolute bottom-0 right-0 flex items-end pointer-events-none">
+          <img
+            src="/pixel-chibis/gojo.png"
+            alt=""
+            className="h-64"
+            style={{ imageRendering: "pixelated" }}
+          />
+          <img
+            src="/pixel-chibis/sukuna.png"
+            alt=""
+            className="h-64"
+            style={{ imageRendering: "pixelated" }}
+          />
+        </div>
+      )}
+
       {/* Debug bar */}
       <div className="absolute top-4 left-4 pointer-events-none space-y-1">
         <span className="block text-xs text-white/50 font-mono tracking-widest uppercase">
