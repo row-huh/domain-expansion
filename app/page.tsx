@@ -3,6 +3,8 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraWithHandTracker, { CameraFeedRef, HandLandmarks } from "@/components/CameraWithHandTracker";
 import GojoEffects from "@/app/gojo-effects";
+import SukunaEffects from "@/app/sukuna-effects";
+
 
 type Landmark = { x: number; y: number; z?: number };
 
@@ -80,6 +82,8 @@ export default function LiveGestureDetectorPage() {
   const [result, setResult] = useState<GestureResult>({ type: "none", handsDetected: 0 });
   const [unlimitedVoidActive, setUnlimitedVoidActive] = useState(false);
   const unlimitedVoidActiveRef = useRef(false);
+  const [malevolentActive, setMalevolentActive] = useState(false);
+  const malevolentRef = useRef(false);
 
   const [idleActive, setIdleActive] = useState(false);
   const [currentSubtitle, setCurrentSubtitle] = useState<string | null>(null);
@@ -167,6 +171,9 @@ export default function LiveGestureDetectorPage() {
 
     if (hands.length >= 2 && checkSukuna(hands)) {
       setResult({ type: "sukuna" });
+       if (!malevolentRef.current) {
+        malevolentRef.current = true;
+        setMalevolentActive(true);
     } else {
       setResult({ type: "none", handsDetected: hands.length });
     }
