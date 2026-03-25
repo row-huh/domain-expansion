@@ -171,9 +171,10 @@ export default function LiveGestureDetectorPage() {
 
     if (hands.length >= 2 && checkSukuna(hands)) {
       setResult({ type: "sukuna" });
-       if (!malevolentRef.current) {
+      if (!malevolentRef.current) {
         malevolentRef.current = true;
         setMalevolentActive(true);
+      }
     } else {
       setResult({ type: "none", handsDetected: hands.length });
     }
