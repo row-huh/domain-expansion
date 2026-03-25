@@ -180,8 +180,16 @@ export default function GojoEffects({ videoElement, onComplete }: Props) {
           offCtx.drawImage(maskOffscreen, 0, 0);
           offCtx.globalCompositeOperation = "source-over";
 
+          // Match the CSS object-cover scaling of the underlying <video>
+          // so the cutout aligns pixel-perfectly with the camera feed
+          const scale = Math.max(W / iw, H / ih);
+          const sw = iw * scale;
+          const sh = ih * scale;
+          const ox = (W - sw) / 2;
+          const oy = (H - sh) / 2;
+
           outCtx.clearRect(0, 0, W, H);
-          outCtx.drawImage(offscreen, 0, 0, W, H);
+          outCtx.drawImage(offscreen, ox, oy, sw, sh);
         }
 
         result.close();
