@@ -84,6 +84,8 @@ export default function LiveGestureDetectorPage() {
   const unlimitedVoidActiveRef = useRef(false);
   const [maloventActive, setMaloventActive] = useState(false);
   const maloventRef = useRef(false);
+  // true while ANY effect (gojo / sukuna) is playing — blocks all gesture detection & idle
+  const effectActiveRef = useRef(false);
 
   const [idleActive, setIdleActive] = useState(false);
   const [currentSubtitle, setCurrentSubtitle] = useState<string | null>(null);
@@ -155,12 +157,26 @@ export default function LiveGestureDetectorPage() {
   const handleVoidComplete = useCallback(() => {
     unlimitedVoidActiveRef.current = false;
     setUnlimitedVoidActive(false);
-  }, []);
+    effectActiveRef.current = false;
+    // restart idle countdown now that the effect is done
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      idleTimerRef.current = null;
+      startIdle();
+    }, IDLE_TRIGGER_MS);
+  }, [startIdle]);
 
   const handleMaloventComplete = useCallback(() => {
     maloventRef.current = false;
     setMaloventActive(false);
-  }, []);
+    effectActiveRef.current = false;
+    // restart idle countdown now that the effect is done
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(() => {
+      idleTimerRef.current = null;
+      startIdle();
+    }, IDLE_TRIGGER_MS);
+  }, [startIdle]);
 
   // Stable — deps are startIdle/stopIdle which are also stable
   const handleHands = useCallback((hands: HandLandmarks[]) => {
@@ -174,21 +190,31 @@ export default function LiveGestureDetectorPage() {
       }, IDLE_TRIGGER_MS);
     }
 
+    // ── Block ALL gesture detection & idle scheduling while any effect is playing ──
+    if (effectActiveRef.current) return;
+
     if (hands.length >= 2 && checkSukuna(hands)) {
       setResult({ type: "sukuna"});
 
       if (!maloventRef.current) {
+        effectActiveRef.current = true;
         maloventRef.current = true;
         setMaloventActive(true);
+        // kill idle timer so it doesn't fire during the effect
+        if (idleTimerRef.current) { clearTimeout(idleTimerRef.current); idleTimerRef.current = null; }
+        stopIdle();
       }
+
+    } else if (hands.length === 1 && checkCrossed(hands[0]) && !unlimitedVoidActiveRef.current) {
+      effectActiveRef.current = true;
+      unlimitedVoidActiveRef.current = true;
+      setUnlimitedVoidActive(true);
+      // kill idle timer so it doesn't fire during the effect
+      if (idleTimerRef.current) { clearTimeout(idleTimerRef.current); idleTimerRef.current = null; }
+      stopIdle();
 
     } else {
       setResult({ type: "none", handsDetected: hands.length });
-    }
-
-    if (hands.length === 1 && checkCrossed(hands[0]) && !unlimitedVoidActiveRef.current) {
-      unlimitedVoidActiveRef.current = true;
-      setUnlimitedVoidActive(true);
     }
 
     if (hands.length > 0) {
