@@ -3,7 +3,7 @@
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraWithHandTracker, { CameraFeedRef, HandLandmarks } from "@/components/CameraWithHandTracker";
 import GojoEffects from "@/app/gojo-effects";
-import SukunaEffects from "@/app/sukuna-effects";
+import SukunaEffects from "@/app/sukuna-effects"
 
 
 type Landmark = { x: number; y: number; z?: number };
@@ -82,8 +82,8 @@ export default function LiveGestureDetectorPage() {
   const [result, setResult] = useState<GestureResult>({ type: "none", handsDetected: 0 });
   const [unlimitedVoidActive, setUnlimitedVoidActive] = useState(false);
   const unlimitedVoidActiveRef = useRef(false);
-  const [malevolentActive, setMalevolentActive] = useState(false);
-  const malevolentRef = useRef(false);
+  const [maloventActive, setMaloventActive] = useState(false);
+  const maloventRef = useRef(false);
 
   const [idleActive, setIdleActive] = useState(false);
   const [currentSubtitle, setCurrentSubtitle] = useState<string | null>(null);
@@ -157,6 +157,11 @@ export default function LiveGestureDetectorPage() {
     setUnlimitedVoidActive(false);
   }, []);
 
+  const handleMaloventComplete = useCallback(() => {
+    maloventRef.current = false;
+    setMaloventActive(false);
+  }, []);
+
   // Stable — deps are startIdle/stopIdle which are also stable
   const handleHands = useCallback((hands: HandLandmarks[]) => {
     if (!cameraReadyRef.current) {
@@ -170,10 +175,13 @@ export default function LiveGestureDetectorPage() {
     }
 
     if (hands.length >= 2 && checkSukuna(hands)) {
-      setResult({ type: "sukuna" });
-       if (!malevolentRef.current) {
-        malevolentRef.current = true;
-        setMalevolentActive(true);
+      setResult({ type: "sukuna"});
+
+      if (!maloventRef.current) {
+        maloventRef.current = true;
+        setMaloventActive(true);
+      }
+
     } else {
       setResult({ type: "none", handsDetected: hands.length });
     }
@@ -232,6 +240,13 @@ export default function LiveGestureDetectorPage() {
           videoElement={cameraRef.current?.videoElement ?? null}
           onComplete={handleVoidComplete}
         />
+      )}
+
+      {maloventActive && (
+        <SukunaEffects
+          videoElement={cameraRef.current?.videoElement ?? null}
+          onComplete={handleMaloventComplete}
+          />
       )}
 
       {overlayContent && (
