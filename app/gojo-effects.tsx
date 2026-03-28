@@ -180,16 +180,25 @@ export default function GojoEffects({ videoElement, onComplete }: Props) {
           offCtx.drawImage(maskOffscreen, 0, 0);
           offCtx.globalCompositeOperation = "source-over";
 
-          // Match the CSS object-cover scaling of the underlying <video>
-          // so the cutout aligns pixel-perfectly with the camera feed
-          const scale = Math.max(W / iw, H / ih);
-          const sw = iw * scale;
-          const sh = ih * scale;
-          const ox = (W - sw) / 2;
-          const oy = (H - sh) / 2;
-
           outCtx.clearRect(0, 0, W, H);
-          outCtx.drawImage(offscreen, ox, oy, sw, sh);
+
+          if (circleComplete) {
+            // Camera is fully covered — draw cutout smaller, centered at bottom
+            const SHRINK = 0.45;
+            const dw = W * SHRINK;
+            const dh = H * SHRINK;
+            const dx = (W - dw) / 2;
+            const dy = H - dh;
+            outCtx.drawImage(offscreen, dx, dy, dw, dh);
+          } else {
+            // Camera still visible — full-size object-cover aligned cutout
+            const scale = Math.max(W / iw, H / ih);
+            const sw = iw * scale;
+            const sh = ih * scale;
+            const ox = (W - sw) / 2;
+            const oy = (H - sh) / 2;
+            outCtx.drawImage(offscreen, ox, oy, sw, sh);
+          }
         }
 
         result.close();

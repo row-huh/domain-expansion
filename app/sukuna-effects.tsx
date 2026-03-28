@@ -258,8 +258,14 @@ export default function SukunaEffects({ videoElement, onComplete }: Props) {
             offCtx.restore();
             offCtx.globalCompositeOperation = "source-over";
 
+            // Camera is never visible during Sukuna — draw cutout smaller, centered at bottom
+            const SHRINK = 0.45;
+            const dw = W * SHRINK;
+            const dh = H * SHRINK;
+            const dx = (W - dw) / 2;
+            const dy = H - dh;
             outCtx.clearRect(0, 0, W, H);
-            outCtx.drawImage(offscreen, 0, 0, W, H);
+            outCtx.drawImage(offscreen, dx, dy, dw, dh);
           }
           result.close();
         } catch (_) {}
