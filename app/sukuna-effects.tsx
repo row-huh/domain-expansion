@@ -154,12 +154,26 @@ export default function SukunaEffects({ videoElement, onComplete }: Props) {
       if (destroyed) return;
       stopSlashes();
 
-      // Glass shatter on the frozen intro frame
+      // Glass shatter on the frozen intro frame — but don't await it;
+      // we trigger the shred at 13.4s audio time regardless
+      let shatterDone = false;
+      let stopShatter: (() => void) | null = null;
+      shatterFrameEffect(sCtx, freezeCv, W, H, () => { shatterDone = true; }, (fn) => { stopShatter = fn; });
+
+      // Wait for audio to hit 13.4s, then forcefully move to shred
       await new Promise<void>(resolve => {
-        shatterFrameEffect(sCtx, freezeCv, W, H, resolve);
+        function poll() {
+          if (destroyed) { resolve(); return; }
+          if (getAudioTime() >= 13.4) { resolve(); return; }
+          requestAnimationFrame(poll);
+        }
+        poll();
       });
 
       if (destroyed) return;
+
+      // Kill shatter if it's still running
+      if (!shatterDone && stopShatter) stopShatter();
       freezeCv.style.display = "none";
       fCtx.clearRect(0, 0, W, H);
       sCtx.clearRect(0, 0, W, H);
@@ -330,10 +344,15 @@ export default function SukunaEffects({ videoElement, onComplete }: Props) {
     ctx: CanvasRenderingContext2D,
     freezeCv: HTMLCanvasElement,
     W: number, H: number,
-    onDone: () => void
+    onDone: () => void,
+    exposeStop?: (stop: () => void) => void
   ) {
     const cx = W / 2, cy = H / 2;
     const rng = () => Math.random();
+    let stopped = false;
+
+    // Expose a stop handle so the caller can kill this early
+    if (exposeStop) exposeStop(() => { stopped = true; ctx.clearRect(0, 0, W, H); onDone(); });
 
     function buildShards(NUM: number) {
       const seeds = Array.from({ length: NUM }, () => ({ x: rng() * W, y: rng() * H }));
@@ -383,6 +402,7 @@ export default function SukunaEffects({ videoElement, onComplete }: Props) {
     let frame = 0;
 
     function tick() {
+      if (stopped) return;
       ctx.clearRect(0, 0, W, H);
       if (frame < CRACK_FRAMES) {
         drawCracks(frame/CRACK_FRAMES, frame);
