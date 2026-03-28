@@ -493,7 +493,6 @@ export default function SukunaEffects({ videoElement, onComplete }: Props) {
         className="absolute inset-0 w-full h-full object-cover"
         style={{ zIndex: 10, display: "none" }}
         playsInline
-        muted
         preload="auto"
       />
 
