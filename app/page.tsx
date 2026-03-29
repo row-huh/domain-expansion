@@ -2,6 +2,7 @@
 
 import { useRef, useState, useCallback, useEffect } from "react";
 import CameraWithHandTracker, { CameraFeedRef, HandLandmarks } from "@/components/CameraWithHandTracker";
+import SplashScreen from "@/components/SplashScreen";
 import GojoEffects from "@/app/gojo-effects";
 import SukunaEffects from "@/app/sukuna-effects"
 
@@ -78,6 +79,7 @@ function checkCrossed(lm: Landmark[]): boolean {
 }
 
 export default function LiveGestureDetectorPage() {
+  const [showSplash, setShowSplash] = useState(true);
   const cameraRef = useRef<CameraFeedRef>(null);
   const [result, setResult] = useState<GestureResult>({ type: "none", handsDetected: 0 });
   const [unlimitedVoidActive, setUnlimitedVoidActive] = useState(false);
@@ -96,6 +98,10 @@ export default function LiveGestureDetectorPage() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const subtitleRafRef = useRef<number | null>(null);
+
+  const handleSplashComplete = useCallback(() => {
+    setShowSplash(false);
+  }, []);
 
   const startIdle = useCallback(() => {
     console.log("[idle] startIdle called");
@@ -256,6 +262,11 @@ export default function LiveGestureDetectorPage() {
     }
     return null;
   })();
+
+  // Show splash screen on load
+  if (showSplash) {
+    return <SplashScreen onEnter={handleSplashComplete} backgroundImage="/splash2.jpg" />;
+  }
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
