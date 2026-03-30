@@ -340,27 +340,7 @@ export default function LiveGestureDetectorPage() {
           />
       )}
 
-      {overlayContent && (
-        <div className="absolute inset-0 pointer-events-none flex items-end justify-center pb-16 px-6">
-          <div
-            className={`
-              bg-gradient-to-br ${overlayContent.color}
-              border ${overlayContent.border}
-              backdrop-blur-md rounded-2xl px-8 py-5
-              flex flex-col items-center gap-1
-            `}
-            style={{ animation: "fadeSlideUp 0.3s ease-out forwards" }}
-          >
-            <span className="text-4xl">{overlayContent.emoji}</span>
-            <span className={`text-2xl font-black tracking-widest uppercase ${overlayContent.text}`}>
-              {overlayContent.label}
-            </span>
-            <span className={`text-sm tracking-wide opacity-80 ${overlayContent.text}`}>
-              {overlayContent.sub}
-            </span>
-          </div>
-        </div>
-      )}
+
 
       {/* Idle overlay */}
       {idleActive && (
