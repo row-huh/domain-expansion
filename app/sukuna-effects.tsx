@@ -173,7 +173,7 @@ export default function SukunaEffects({ videoElement, onComplete }: Props) {
       if (destroyed) return;
 
       // Kill shatter if it's still running
-      if (!shatterDone && stopShatter) stopShatter();
+      if (!shatterDone && stopShatter) (stopShatter as () => void)();
       freezeCv.style.display = "none";
       fCtx.clearRect(0, 0, W, H);
       sCtx.clearRect(0, 0, W, H);
