@@ -1,5 +1,7 @@
 "use client";
 
+import posthog from "posthog-js";
+
 const GRAY = "#9ca3af";
 
 export default function Navbar() {
@@ -23,6 +25,7 @@ export default function Navbar() {
         style={{ color: "rgba(255,255,255,0.45)", transition: "color 0.2s", lineHeight: 0 }}
         onMouseEnter={e => (e.currentTarget.style.color = GRAY)}
         onMouseLeave={e => (e.currentTarget.style.color = "rgba(255,255,255,0.45)")}
+        onClick={() => posthog.capture("github_link_clicked")}
       >
         <svg height="24" width="24" viewBox="0 0 16 16" fill="currentColor" aria-label="GitHub">
           <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38

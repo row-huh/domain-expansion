@@ -12,6 +12,7 @@
     "@mediapipe/tasks-vision": "^0.10.32",
     "mediapipe": "^0.0.1-security",
     "next": "16.1.6",
+    "posthog-js": "^1.364.1",
     "react": "^19.2.3",
     "react-dom": "19.2.3"
   },

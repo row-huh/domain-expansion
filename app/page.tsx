@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
+import posthog from "posthog-js";
 import CameraWithHandTracker, { CameraFeedRef, HandLandmarks } from "@/components/CameraWithHandTracker";
 import SplashScreen from "@/components/SplashScreen";
 import GojoEffects from "@/app/gojo-effects";
@@ -106,6 +107,7 @@ export default function LiveGestureDetectorPage() {
 
   const startIdle = useCallback(() => {
     console.log("[idle] startIdle called");
+    posthog.capture("idle_sequence_started");
     idleActiveRef.current = true;
     setIdleActive(true);
     setCurrentSubtitle(null);
@@ -162,6 +164,7 @@ export default function LiveGestureDetectorPage() {
   }, []);
 
   const handleVoidComplete = useCallback(() => {
+    posthog.capture("effect_unlimited_void_completed");
     unlimitedVoidActiveRef.current = false;
     setUnlimitedVoidActive(false);
     effectActiveRef.current = false;
@@ -174,6 +177,7 @@ export default function LiveGestureDetectorPage() {
   }, [startIdle]);
 
   const handleMaloventComplete = useCallback(() => {
+    posthog.capture("effect_malevolent_shrine_completed");
     maloventRef.current = false;
     setMaloventActive(false);
     effectActiveRef.current = false;
@@ -189,6 +193,7 @@ export default function LiveGestureDetectorPage() {
   const handleHands = useCallback((hands: HandLandmarks[]) => {
     if (!cameraReadyRef.current) {
       cameraReadyRef.current = true;
+      posthog.capture("camera_ready");
       console.log("[hands] camera ready, scheduling idle in", IDLE_TRIGGER_MS, "ms");
       idleTimerRef.current = setTimeout(() => {
         idleTimerRef.current = null;
@@ -204,6 +209,7 @@ export default function LiveGestureDetectorPage() {
       setResult({ type: "sukuna"});
 
       if (!maloventRef.current) {
+        posthog.capture("gesture_sukuna_triggered");
         effectActiveRef.current = true;
         maloventRef.current = true;
         setMaloventActive(true);
@@ -213,6 +219,7 @@ export default function LiveGestureDetectorPage() {
       }
 
     } else if (hands.length === 1 && checkCrossed(hands[0]) && !unlimitedVoidActiveRef.current) {
+      posthog.capture("gesture_gojo_triggered");
       effectActiveRef.current = true;
       unlimitedVoidActiveRef.current = true;
       setUnlimitedVoidActive(true);

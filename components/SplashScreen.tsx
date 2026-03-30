@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import posthog from "posthog-js";
 import Navbar from "@/components/Navbar";
 
 interface SplashScreenProps {
@@ -20,6 +21,7 @@ export default function SplashScreen({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && !isExiting) {
+        posthog.capture("splash_entered");
         setIsExiting(true);
         setTimeout(() => {
           setIsVisible(false);
