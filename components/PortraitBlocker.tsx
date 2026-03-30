@@ -2,32 +2,35 @@
 
 import { useEffect, useState } from "react";
 
+const ROASTS = [
+  "That's a bold confidence in bad decisions",
+  "Your attention span must be as small as your screen",
+  "You probably click 'remind me later' on everything",
+  "You look like you name your files final_final_v3",
+  "You look like someone who loses arguments to Google",
+  "You definitely trust yourself way more than you should",
+  "That device looks like it struggles to open the calculator",
+];
+
+const IMAGES = [
+  "/judging/cat1.jpg",
+  "/judging/judge-cat.jpg",
+  "/judging/judging-face.jpg",
+  "/judging/side-eye-dog-suspicious.jpg",
+];
+
 export default function PortraitBlocker() {
-  const [showBlocker, setShowBlocker] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [roast] = useState(() => ROASTS[Math.floor(Math.random() * ROASTS.length)]);
+  const [image] = useState(() => IMAGES[Math.floor(Math.random() * IMAGES.length)]);
 
   useEffect(() => {
-    // Only activate on touch-capable devices (phones / tablets)
-    const isTouchDevice =
-      "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    if (!isTouchDevice) return;
-
-    const update = () => {
-      setShowBlocker(window.matchMedia("(orientation: portrait)").matches);
-    };
-
-    update();
-
-    const mql = window.matchMedia("(orientation: portrait)");
-    mql.addEventListener("change", update);
-    window.addEventListener("resize", update);
-
-    return () => {
-      mql.removeEventListener("change", update);
-      window.removeEventListener("resize", update);
-    };
+    const touch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const small = window.screen.width <= 1024 || window.screen.height <= 1024;
+    setIsMobile(touch && small);
   }, []);
 
-  if (!showBlocker) return null;
+  if (!isMobile) return null;
 
   return (
     <div
@@ -40,70 +43,51 @@ export default function PortraitBlocker() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 28,
-        padding: "0 40px",
+        gap: 20,
+        padding: "0 36px",
       }}
     >
-      {/* Animated phone icon — tilts from portrait → landscape */}
-      <div style={{ animation: "rotateHint 2.4s ease-in-out infinite" }}>
-        <svg
-          width="64"
-          height="64"
-          viewBox="0 0 64 64"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          {/* Phone body */}
-          <rect
-            x="18"
-            y="8"
-            width="28"
-            height="48"
-            rx="4"
-            stroke="rgba(167,139,250,0.7)"
-            strokeWidth="2"
-            fill="none"
-          />
-          {/* Home indicator */}
-          <line
-            x1="28"
-            y1="50"
-            x2="36"
-            y2="50"
-            stroke="rgba(167,139,250,0.4)"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-      </div>
+      {/* Judge cat */}
+      <img
+        src={image}
+        alt="Judging you"
+        style={{
+          width: 140,
+          height: "auto",
+          borderRadius: 12,
+          opacity: 0.9,
+        }}
+      />
 
-      <div style={{ textAlign: "center" }}>
-        <p
-          style={{
-            fontFamily: "var(--font-geist-sans), sans-serif",
-            fontSize: "1.1rem",
-            color: "rgba(255,255,255,0.8)",
-            letterSpacing: "0.03em",
-            margin: "0 0 8px 0",
-            fontWeight: 600,
-          }}
-        >
-          Rotate Your Device
-        </p>
-        <p
-          style={{
-            fontFamily: "var(--font-geist-sans), sans-serif",
-            fontSize: "0.78rem",
-            color: "rgba(255,255,255,0.35)",
-            margin: 0,
-            lineHeight: 1.5,
-          }}
-        >
-          This experience requires landscape mode
-        </p>
-      </div>
+      <p
+        style={{
+          fontFamily: "var(--font-geist-sans), sans-serif",
+          fontSize: "1.1rem",
+          color: "rgba(255,255,255,0.85)",
+          textAlign: "center",
+          fontWeight: 700,
+          margin: 0,
+          lineHeight: 1.4,
+        }}
+      >
+        Did you really try to access this website through phone?
+      </p>
 
-      {/* Accent line — matches splash screen */}
+      <p
+        style={{
+          fontFamily: "var(--font-geist-sans), sans-serif",
+          fontSize: "0.85rem",
+          color: "rgba(167,139,250,0.7)",
+          textAlign: "center",
+          fontStyle: "italic",
+          margin: 0,
+          lineHeight: 1.5,
+        }}
+      >
+        {roast}
+      </p>
+
+      {/* Accent line */}
       <div
         style={{
           position: "absolute",
@@ -115,14 +99,6 @@ export default function PortraitBlocker() {
             "linear-gradient(to right, transparent, rgba(167,139,250,0.5), transparent)",
         }}
       />
-
-      <style>{`
-        @keyframes rotateHint {
-          0%, 15%   { transform: rotate(0deg); }
-          40%, 65%  { transform: rotate(-90deg); }
-          85%, 100% { transform: rotate(0deg); }
-        }
-      `}</style>
     </div>
   );
 }
