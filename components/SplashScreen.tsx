@@ -206,11 +206,37 @@ export default function SplashScreen({
               color: GRAY,
               letterSpacing: "0.28em",
               textTransform: "uppercase",
+              animation: "pulse 2s ease-in-out infinite",
             }}
           >
             Press Enter to Begin
           </span>
         </div>
+      </div>
+
+      {/* Bottom subtitle */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 40,
+          left: 0,
+          right: 0,
+          textAlign: "center",
+          zIndex: 10,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-geist-sans), sans-serif",
+            fontSize: "0.75rem",
+            color: "rgba(255,255,255,0.45)",
+            letterSpacing: "0.05em",
+            margin: 0,
+            fontWeight: 600,
+          }}
+        >
+          Brought to you by Roha and Usaib
+        </p>
       </div>
 
       {/* Bottom accent line */}
@@ -234,6 +260,11 @@ export default function SplashScreen({
         @keyframes floatPulse {
           0%, 100% { opacity: 0.3; transform: scale(1); }
           50%       { opacity: 0.7; transform: scale(1.06); }
+        }
+
+        @keyframes pulse {
+          0%, 100% { opacity: 0.5; }
+          50%      { opacity: 1; }
         }
 
         @keyframes splashExit {

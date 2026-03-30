@@ -16,9 +16,24 @@ export default function Navbar() {
         background: "#000000",
       }}
     >
-      <span style={{ fontSize: "1.05rem", fontWeight: 600, color: "#ffffff", letterSpacing: "0.01em" }}>
+      <button
+        onClick={() => window.location.reload()}
+        style={{
+          fontSize: "1.05rem",
+          fontWeight: 600,
+          color: "#ffffff",
+          letterSpacing: "0.01em",
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          transition: "opacity 0.2s",
+        }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = "0.7")}
+        onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
+      >
         Domain Expansion
-      </span>
+      </button>
 
       <a
         href="https://github.com/row-huh/domain-expansion"
