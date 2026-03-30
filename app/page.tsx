@@ -249,6 +249,16 @@ export default function LiveGestureDetectorPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      if (unlimitedVoidActiveRef.current) handleVoidComplete();
+      else if (maloventRef.current) handleMaloventComplete();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleVoidComplete, handleMaloventComplete]);
+
   const overlayContent = (() => {
     if (result.type === "sukuna") {
       return {
