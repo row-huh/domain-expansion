@@ -1,36 +1,117 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
-## Getting Started
+# Jujutsu Kaisen Domain Expansion 
 
-First, run the development server:
+## Overview
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+A Next.js web application that detects anime-inspired hand gestures using MediaPipe hand tracking and triggers cinematic domain expansion effects. This interactive experience brings the mystical cursed techniques from Jujutsu Kaisen to life through real-time hand gesture recognition.
+
+The application features two domain expansions:
+
+•  Unlimited Void (Gojo's Technique) — Triggered by crossing index and middle fingers
+•  Malevolent Shrine (Sukuna's Technique) — Triggered by mirroring both hands
+
+## Features
+
+•  Real-time Hand Tracking — Uses MediaPipe to detect and track both hands simultaneously
+
+•  Gesture Recognition — Detects specific hand poses that correspond to Jujutsu Kaisen techniques.
+
+•  Cinematic Effects — Full-screen visual effects triggered upon successful gesture detection.
+
+•  Splash Screen — Immersive intro screen with custom font that launches on app startup
+
+## Technical Features
+
+• Built with Next.js 13+ (App Router)
+• TypeScript for type-safe development
+• Tailwind CSS for styling
+• React Hooks for state management
+• Responsive Design — Works on desktop, tablet, and mobile devices
+• Performance Optimized — Efficient hand landmark calculations and animation handling
+
+
+## Project Structure
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+domain-expansion/
+├── app/
+│   ├── page.tsx                    # Main application page
+│   ├── gojo-effects.tsx            # Unlimited Void effect logic
+│   ├── sukuna-effects.tsx          # Malevolent Shrine effect logic
+│   ├── layout.tsx                  # App root layout
+│   └── globals.css                 # Global styles & animations
+├── components/
+│   ├── CameraWithHandTracker.tsx   # MediaPipe integration & hand detection
+│   └── Navbar.tsx
+    └── SplashScreen.tsx            # Splash screen with Nerdropol Lattice font
+├── public/
+│   ├── fonts/
+│   │   └── nerdropol-lattice.otf   # Custom font for splash screen
+│   ├── pixel-chibis/
+│   │   ├── gojo-original.png
+│   │   └── gojo.png
+|   |   ├── sukuna-original.png
+│   │   └── sukuna.png
+│   ├── gojo/
+│   │   ├── unlimited-void.mp3
+│   │   └── unlimited-void.webm     # Unlimited Void effect video
+│   ├── sukuna/
+│   │   ├── sukuna-audio.mp3
+│   │   ├── DE-background.webm      # Malevolent Shrine background
+│   │   └── ripple-effect.webm      # Ripple animation
+│   └── idle/
+|   |   ├── gojo-gimmeyourhand2.mp3
+│   |   └── gojo-gimmeyourhand2.webm # Idle animation with audio
+├── favicon.ico                      # App icon
+└── (config files)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How To Use For Users
 
-## Learn More
+• Launch the App — Splash screen appears with "Press Enter to Start"
+• Press Enter — Transition to the main application interface
+• Allow Camera Access — Grant permissions when prompted
+• Perform Gestures:
+  • Gojo's Unlimited Void: Cross your index and middle fingers on one hand
+  • Sukuna's Malevolent Shrine: Mirror both hands with specific finger poses
 
-To learn more about Next.js, take a look at the following resources:
+• Watch Effects — Full-screen cinematic animations trigger upon successful detection
+• Idle State — After 5 seconds of inactivity, Gojo's idle animation plays with subtitles
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Status Indicators
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+• Top-left: Hands detected count and idle timer status
+• Bottom-right: Gesture detection tips
+• Center-bottom: Real-time effect notifications
 
-## Deploy on Vercel
+# Gesture Detection Details
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Unlimited Void (Gojo)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+• Single hand detected
+• Index finger extended (tip above MCP joint)
+• Middle finger extended (tip above MCP joint)
+• Index and middle tips have inverted X relationship vs their MCPs (crossing)
+• Ring and pinky fingers bent (tips at or below PIP joint)
+
+
+## Malovent Shrine (Sukuna)
+
+• Two hands detected
+• Wrists aligned (distance < 0.1)
+• Pinky fingers aligned (distance < 0.1)
+• Thumbs aligned (distance < 0.1)
+• Both middle fingers extended above wrists
+• Both pinky fingers extended above wrists
+• At least 2 of these conditions must pass
+
+
+
+
+
+
+
+
+
