@@ -282,6 +282,50 @@ export default function LiveGestureDetectorPage() {
     <div className="relative w-screen h-screen overflow-hidden bg-black">
       <CameraWithHandTracker ref={cameraRef} onHandsDetected={handleHands} />
 
+      {/* Vignette frame */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          boxShadow: "inset 0 0 120px 40px rgba(0,0,0,0.7)",
+        }}
+      />
+
+      {/* Hint card — Gojo (left) */}
+      {!unlimitedVoidActive && !maloventActive && (
+        <div
+          className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center gap-2"
+          style={{ animation: "fadeSlideUp 0.5s ease-out forwards" }}
+        >
+          <img
+            src="/sidebar/gojo.jpg"
+            alt="Gojo gesture"
+            className="w-24 rounded-lg opacity-70"
+            style={{ border: "1px solid rgba(147,197,253,0.3)" }}
+          />
+          <span className="text-blue-200/60 text-xs font-mono tracking-wide text-center leading-tight">
+            cross<br/>index + middle
+          </span>
+        </div>
+      )}
+
+      {/* Hint card — Sukuna (right) */}
+      {!maloventActive && !unlimitedVoidActive && (
+        <div
+          className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex flex-col items-center gap-2"
+          style={{ animation: "fadeSlideUp 0.5s ease-out forwards" }}
+        >
+          <img
+            src="/sidebar/sukuna.jpg"
+            alt="Sukuna gesture"
+            className="w-24 rounded-lg opacity-70"
+            style={{ border: "1px solid rgba(252,165,165,0.3)" }}
+          />
+          <span className="text-red-200/60 text-xs font-mono tracking-wide text-center leading-tight">
+            mirror hands<br/>together
+          </span>
+        </div>
+      )}
+
       {unlimitedVoidActive && (
         <GojoEffects
           videoElement={cameraRef.current?.videoElement ?? null}
