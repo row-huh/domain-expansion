@@ -11,30 +11,11 @@ export default function Navbar() {
         zIndex: 50,
         padding: "12px 24px",
         display: "flex",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
         alignItems: "center",
-        background: "#000000",
+        background: "transparent",
       }}
     >
-      <button
-        onClick={() => window.location.reload()}
-        style={{
-          fontSize: "1.05rem",
-          fontWeight: 600,
-          color: "#ffffff",
-          letterSpacing: "0.01em",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: 0,
-          transition: "opacity 0.2s",
-        }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = "0.7")}
-        onMouseLeave={e => (e.currentTarget.style.opacity = "1")}
-      >
-        Domain Expansion
-      </button>
-
       <a
         href="https://github.com/row-huh/domain-expansion"
         target="_blank"
