@@ -4,7 +4,8 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import CameraWithHandTracker, { CameraFeedRef, HandLandmarks } from "@/components/CameraWithHandTracker";
 import SplashScreen from "@/components/SplashScreen";
 import GojoEffects from "@/app/gojo-effects";
-import SukunaEffects from "@/app/sukuna-effects"
+import SukunaEffects from "@/app/sukuna-effects";
+import Navbar from "@/components/Navbar";
 
 
 type Landmark = { x: number; y: number; z?: number };
@@ -280,6 +281,7 @@ export default function LiveGestureDetectorPage() {
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-black">
+      <Navbar />
       <CameraWithHandTracker ref={cameraRef} onHandsDetected={handleHands} />
 
       {/* Vignette frame */}
