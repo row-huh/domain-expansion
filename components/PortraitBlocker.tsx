@@ -19,18 +19,30 @@ const IMAGES = [
   "/judging/side-eye-dog-suspicious.jpg",
 ];
 
+function isMobilePhone(): boolean {
+  // Check user agent for mobile indicators
+  const ua = navigator.userAgent.toLowerCase();
+  const mobileUA = /android|iphone|ipod|blackberry|iemobile|opera mini|webos/i.test(ua);
+
+  if (!mobileUA) return false;
+
+  const hasCoarsePointer = window.matchMedia("(pointer:coarse)").matches;
+
+  const isTablet = window.matchMedia("(max-width: 600px)").matches === false && mobileUA;
+  
+  return mobileUA && hasCoarsePointer && !isTablet;
+}
+
 export default function PortraitBlocker() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [shouldBlock, setShouldBlock] = useState(false);
   const [roast] = useState(() => ROASTS[Math.floor(Math.random() * ROASTS.length)]);
   const [image] = useState(() => IMAGES[Math.floor(Math.random() * IMAGES.length)]);
 
   useEffect(() => {
-    const touch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    const small = window.screen.width <= 1024 || window.screen.height <= 1024;
-    setIsMobile(touch && small);
+    setShouldBlock(isMobilePhone());
   }, []);
 
-  if (!isMobile) return null;
+  if (!shouldBlock) return null;
 
   return (
     <div
